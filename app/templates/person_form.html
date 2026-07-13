@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Edit' if person else 'Add' }} Person{% endblock %}
+{% block content %}
+<h1>{{ 'Edit ' + person.display_name() if person else 'Add Person' }}</h1>
+<form class="stack-form" method="post">
+  <label>Given name(s)
+    <input type="text" name="given_names" value="{{ person.given_names if person else '' }}">
+  </label>
+  <label>Surname
+    <input type="text" name="surname" value="{{ person.surname if person else '' }}">
+  </label>
+  <label>Sex
+    <select name="sex">
+      <option value="U" {{ 'selected' if not person or person.sex == 'U' }}>Unknown</option>
+      <option value="M" {{ 'selected' if person and person.sex == 'M' }}>Male</option>
+      <option value="F" {{ 'selected' if person and person.sex == 'F' }}>Female</option>
+    </select>
+  </label>
+  <div class="form-row">
+    <label>Birth date
+      <input type="text" name="birth_date" placeholder="e.g. 4 JUL 1950 or ABT 1950" value="{{ person.birth_date if person else '' }}">
+    </label>
+    <label>Birth place
+      <input type="text" name="birth_place" value="{{ person.birth_place if person else '' }}">
+    </label>
+  </div>
+  <div class="form-row">
+    <label>Death date
+      <input type="text" name="death_date" value="{{ person.death_date if person else '' }}">
+    </label>
+    <label>Death place
+      <input type="text" name="death_place" value="{{ person.death_place if person else '' }}">
+    </label>
+  </div>
+  <label class="checkbox-label">
+    <input type="checkbox" name="is_living" {{ 'checked' if not person or person.is_living }}>
+    Living
+  </label>
+  <label>Notes
+    <textarea name="notes" rows="4">{{ person.notes if person else '' }}</textarea>
+  </label>
+  <div class="form-actions">
+    <button type="submit" class="btn btn-primary">Save</button>
+    {% if person %}
+      <a class="btn" href="{{ url_for('people.detail', person_id=person.id) }}">Cancel</a>
+    {% else %}
+      <a class="btn" href="{{ url_for('people.list_people') }}">Cancel</a>
+    {% endif %}
+  </div>
+</form>
+
+{% if person %}
+<form class="danger-zone" method="post" action="{{ url_for('people.delete_person', person_id=person.id) }}"
+      onsubmit="return confirm('Delete {{ person.display_name() }}? This cannot be undone.');">
+  <button type="submit" class="btn btn-danger">Delete Person</button>
+</form>
+{% endif %}
+{% endblock %}

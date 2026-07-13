@@ -1,0 +1,33 @@
+<div class="person-picker" data-exclude="{{ person.id }}">
+  <div class="picker-mode-toggle">
+    <label class="radio-label"><input type="radio" name="mode" value="new" checked> New person</label>
+    <label class="radio-label"><input type="radio" name="mode" value="existing"> Existing person</label>
+  </div>
+
+  <div class="picker-new-fields">
+    <div class="form-row">
+      <label>Given name(s) <input type="text" name="given_names"></label>
+      <label>Surname <input type="text" name="surname"></label>
+    </div>
+    <label>Sex
+      <select name="sex">
+        <option value="U">Unknown</option>
+        <option value="M">Male</option>
+        <option value="F">Female</option>
+      </select>
+    </label>
+    <div class="form-row">
+      <label>Birth date <input type="text" name="birth_date"></label>
+      <label>Birth place <input type="text" name="birth_place"></label>
+    </div>
+  </div>
+
+  <div class="picker-existing-fields" hidden>
+    <label>Search existing person
+      <input type="text" class="existing-search" autocomplete="off" placeholder="Type a name…">
+    </label>
+    <div class="existing-search-results"></div>
+    <input type="hidden" name="existing_id">
+    <div class="existing-selected muted"></div>
+  </div>
+</div>

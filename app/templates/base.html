@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Family Tree{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+  <header class="site-header">
+    <div class="site-header-inner">
+      <a class="brand" href="{{ url_for('main.index') }}">🌳 Family Tree</a>
+      <nav class="main-nav">
+        <a href="{{ url_for('people.list_people') }}">People</a>
+        <a href="{{ url_for('people.new_person') }}">Add Person</a>
+        <a href="{{ url_for('gedcom.index') }}">Import / Export</a>
+      </nav>
+      <form class="header-search" action="{{ url_for('people.list_people') }}" method="get">
+        <input type="search" name="q" placeholder="Search people…" value="{{ request.args.get('q', '') }}">
+      </form>
+    </div>
+  </header>
+  <main class="site-main">
+    {% block content %}{% endblock %}
+  </main>
+</body>
+</html>

@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}{{ person.display_name() }} — Tree{% endblock %}
+{% block content %}
+<div class="tree-toolbar">
+  <h1>{{ person.display_name() }}'s Tree</h1>
+  <div class="tree-toolbar-actions">
+    <a class="btn" href="{{ url_for('people.detail', person_id=person.id) }}">View Profile</a>
+    <button id="zoom-in" class="btn btn-sm" type="button">+</button>
+    <button id="zoom-out" class="btn btn-sm" type="button">−</button>
+    <button id="zoom-reset" class="btn btn-sm" type="button">Reset</button>
+  </div>
+</div>
+<div id="tree-container" class="tree-container" data-root-id="{{ person.id }}"></div>
+<script src="{{ url_for('static', filename='js/tree.js') }}"></script>
+{% endblock %}

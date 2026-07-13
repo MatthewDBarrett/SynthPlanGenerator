@@ -1,12 +1,20 @@
-# 🎈 Blank app template
+# Family Tree
 
-A simple Streamlit app template for you to modify!
+A self-hosted family tree / genealogy web app — a simplified, self-hosted alternative to Ancestry.com. Built with Flask and SQLite so it can eventually run on modest hardware (e.g. a Raspberry Pi).
 
-[![Open in Streamlit](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://blank-app-template.streamlit.app/)
+## Features
 
-### How to run it on your own machine
+- **People & profiles** — add people with names, sex, birth/death dates & places, notes.
+- **Family relationships** — link parents, spouses (including multiple marriages), and children. Existing people can be linked via a live search instead of re-entering them.
+- **Interactive family tree** — pan/zoom SVG pedigree view centered on any person, showing ancestors to the left and descendants to the right. Click any card to re-center the tree on that person.
+- **Life events** — free-form events (residence, occupation, baptism, etc.) beyond birth/death.
+- **Photos & documents** — upload and attach files to a person's profile; the first photo becomes their profile picture automatically (can be changed).
+- **GEDCOM import/export** — download your tree as a standard `.ged` file (readable by Ancestry.com, FamilySearch, Gramps, etc.), or import one to merge or replace your data.
+- **Search** — find people by name from the header search box.
 
-Prerequisite: install `uv` if you don't already have it.
+## Running it locally
+
+Prerequisite: install [`uv`](https://docs.astral.sh/uv/) if you don't already have it.
 
 ```
 $ curl -LsSf https://astral.sh/uv/install.sh | sh
@@ -21,5 +29,37 @@ $ curl -LsSf https://astral.sh/uv/install.sh | sh
 2. Run the app
 
    ```
-   $ uv run streamlit run streamlit_app.py
+   $ uv run python run.py
    ```
+
+3. Open http://localhost:5000 in your browser.
+
+Data is stored in a local SQLite database and uploaded files under `instance/` (both are git-ignored).
+
+## Running the tests
+
+```
+$ uv run pytest
+```
+
+## Project layout
+
+```
+app/
+  models.py          SQLAlchemy models (Person, Family, FamilyChild, Event, Media, MediaLink)
+  routes/            Flask blueprints (people, families, tree, media, gedcom)
+  gedcom_import.py    GEDCOM 5.5.1 parser
+  gedcom_export.py    GEDCOM 5.5.1 writer
+  templates/          Jinja2 templates
+  static/             CSS and vanilla JS (family tree renderer, relative-picker autocomplete)
+run.py                Dev server entry point
+```
+
+## Deploying to a Raspberry Pi
+
+Not done yet — this has only been run and tested locally so far. When we get to deployment on a Pi 3B (32-bit Raspberry Pi OS Lite), a few things to plan for:
+
+- Serve with a production WSGI server (e.g. `gunicorn` or `waitress`) behind something like `nginx`, instead of the Flask dev server.
+- Confirm wheel availability for `Pillow` on 32-bit ARM for the target Python version, or install its system dependencies via `apt` if it needs to build from source.
+- Run it as a `systemd` service so it starts on boot and restarts on failure.
+- Back up the `instance/` directory (SQLite database + uploaded photos/documents) regularly.

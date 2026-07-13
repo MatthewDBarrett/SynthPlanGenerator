@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}Import / Export{% endblock %}
+{% block content %}
+<h1>Import / Export</h1>
+
+<section class="gedcom-section">
+  <h2>Export</h2>
+  <p>Download your whole tree as a standard GEDCOM (.ged) file, readable by Ancestry.com, FamilySearch, Gramps, and most other genealogy software.</p>
+  <a class="btn btn-primary" href="{{ url_for('gedcom.export') }}">Download GEDCOM</a>
+</section>
+
+<section class="gedcom-section">
+  <h2>Import</h2>
+  <p>Upload a GEDCOM (.ged) file exported from Ancestry.com or another genealogy tool.</p>
+  <form method="post" action="{{ url_for('gedcom.import_file') }}" enctype="multipart/form-data" class="stack-form">
+    <label>GEDCOM file <input type="file" name="file" accept=".ged" required></label>
+    <label class="checkbox-label">
+      <input type="checkbox" name="replace">
+      Replace all existing data (otherwise this is merged in as new people)
+    </label>
+    <button type="submit" class="btn btn-primary">Import</button>
+  </form>
+</section>
+{% endblock %}
