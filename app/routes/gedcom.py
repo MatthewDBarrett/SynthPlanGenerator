@@ -1,11 +1,28 @@
+import io
+import zipfile
+
 from flask import Blueprint, Response, current_app, flash, redirect, render_template, request, url_for
 
 from app.extensions import db
 from app.gedcom_export import export_gedcom
-from app.gedcom_import import import_gedcom
+from app.gedcom_import import GedcomImportError, import_gedcom
 from app.models import Event, Family, FamilyChild, Media, MediaLink, Person
 
 bp = Blueprint("gedcom", __name__)
+
+
+def _unwrap_zip(raw: bytes) -> bytes:
+    """Some exports arrive zipped (e.g. emailed or downloaded as an archive).
+    If this looks like a zip, pull out the .ged file inside it."""
+    if raw[:2] != b"PK":
+        return raw
+    with zipfile.ZipFile(io.BytesIO(raw)) as zf:
+        members = [n for n in zf.namelist() if not n.endswith("/")]
+        candidates = [n for n in members if n.lower().endswith(".ged")] or members
+        if not candidates:
+            raise GedcomImportError("That zip file doesn't contain a .ged file.")
+        name = max(candidates, key=lambda n: zf.getinfo(n).file_size)
+        return zf.read(name)
 
 
 def _decode_gedcom(raw: bytes) -> str:
@@ -44,7 +61,7 @@ def import_file():
         return redirect(url_for("gedcom.index"))
 
     try:
-        raw = file.read()
+        raw = _unwrap_zip(file.read())
         text = _decode_gedcom(raw)
 
         if request.form.get("replace"):
@@ -57,6 +74,10 @@ def import_file():
             db.session.commit()
 
         result = import_gedcom(text)
+    except GedcomImportError as exc:
+        db.session.rollback()
+        flash(str(exc), "error")
+        return redirect(url_for("gedcom.index"))
     except Exception:
         db.session.rollback()
         current_app.logger.exception("GEDCOM import failed")

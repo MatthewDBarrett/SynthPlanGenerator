@@ -149,6 +149,39 @@ def test_import_dedupes_duplicate_child_pointers(app):
         assert FamilyChild.query.filter_by(family_id=family.id).count() == 1
 
 
+def test_import_unwraps_zipped_gedcom(client, app):
+    import zipfile
+
+    ged_text = "0 HEAD\n1 CHAR UTF-8\n0 @I1@ INDI\n1 NAME Zip /Person/\n1 SEX M\n0 TRLR\n"
+    zip_buf = io.BytesIO()
+    with zipfile.ZipFile(zip_buf, "w") as zf:
+        zf.writestr("Family Tree.ged", ged_text)
+    zip_buf.seek(0)
+
+    resp = client.post(
+        "/gedcom/import",
+        data={"file": (zip_buf, "export.ged")},  # note: .ged extension but zip content
+        content_type="multipart/form-data",
+        follow_redirects=True,
+    )
+    assert resp.status_code == 200
+    assert b"Imported 1 people" in resp.data
+    with app.app_context():
+        assert Person.query.filter_by(given_names="Zip").count() == 1
+
+
+def test_import_non_gedcom_file_shows_clear_error_not_fake_success(client):
+    resp = client.post(
+        "/gedcom/import",
+        data={"file": (io.BytesIO(b"this is just some random text, not gedcom at all"), "notes.txt")},
+        content_type="multipart/form-data",
+        follow_redirects=True,
+    )
+    assert resp.status_code == 200
+    assert b"No people were found" in resp.data
+    assert b"Imported 0 people" not in resp.data
+
+
 def test_import_bad_file_shows_friendly_error_not_500(client, monkeypatch):
     import app.routes.gedcom as gedcom_route
 

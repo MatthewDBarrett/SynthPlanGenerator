@@ -9,6 +9,10 @@ from app.extensions import db
 from app.models import Family, FamilyChild, Person
 
 
+class GedcomImportError(ValueError):
+    """Raised when the uploaded file doesn't contain any readable GEDCOM records."""
+
+
 def _parse_name(value: str):
     if "/" in value:
         given, _, rest = value.partition("/")
@@ -125,6 +129,13 @@ def _parse_family(lines):
 
 def import_gedcom(text: str) -> dict:
     records = _parse_records(text)
+
+    if not any(r["type"] == "INDI" for r in records.values()):
+        raise GedcomImportError(
+            "No people were found in that file. Make sure you're uploading the "
+            ".ged file itself (not a .zip or other archive), and that it's a "
+            "standard GEDCOM export."
+        )
 
     person_map = {}  # gedcom xref -> Person
     family_map = {}  # gedcom xref -> Family
