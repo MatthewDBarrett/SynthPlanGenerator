@@ -57,9 +57,4 @@ run.py                Dev server entry point
 
 ## Deploying to a Raspberry Pi
 
-Not done yet — this has only been run and tested locally so far. When we get to deployment on a Pi 3B (32-bit Raspberry Pi OS Lite), a few things to plan for:
-
-- Serve with a production WSGI server (e.g. `gunicorn` or `waitress`) behind something like `nginx`, instead of the Flask dev server.
-- Confirm wheel availability for `Pillow` on 32-bit ARM for the target Python version, or install its system dependencies via `apt` if it needs to build from source.
-- Run it as a `systemd` service so it starts on boot and restarts on failure.
-- Back up the `instance/` directory (SQLite database + uploaded photos/documents) regularly.
+See [DEPLOY.md](DEPLOY.md) for step-by-step instructions to install this as a `systemd` service on a Raspberry Pi (or any Debian-based Linux), running under `gunicorn` so it starts on boot and restarts on failure.

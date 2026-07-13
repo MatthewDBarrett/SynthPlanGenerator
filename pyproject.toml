@@ -3,11 +3,12 @@ name = "family-tree"
 version = "0.1.0"
 description = "A self-hosted family tree / genealogy web app."
 readme = "README.md"
-requires-python = ">=3.11"
+requires-python = ">=3.9"
 dependencies = [
     "flask>=3.0.0",
     "flask-sqlalchemy>=3.1.0",
     "pillow>=10.4.0",
+    "gunicorn>=21.2.0",
 ]
 
 [dependency-groups]

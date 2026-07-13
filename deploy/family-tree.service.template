@@ -1,0 +1,18 @@
+[Unit]
+Description=Family Tree (self-hosted genealogy app)
+After=network.target
+
+[Service]
+Type=simple
+User=__APP_USER__
+Group=__APP_GROUP__
+WorkingDirectory=__APP_DIR__
+Environment=PATH=__APP_DIR__/.venv/bin
+ExecStart=__APP_DIR__/.venv/bin/gunicorn --workers __WORKERS__ --bind __BIND_HOST__:__PORT__ --timeout 120 run:app
+Restart=on-failure
+RestartSec=5
+# Modest memory footprint on a Pi 3B: don't let a leaking worker eat the box.
+MemoryMax=400M
+
+[Install]
+WantedBy=multi-user.target
