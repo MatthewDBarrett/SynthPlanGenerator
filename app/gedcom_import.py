@@ -17,24 +17,21 @@ def _parse_name(value: str):
     return value.strip(), ""
 
 
-def _split_line(raw_line: str):
-    parts = raw_line.strip().split(" ", 2)
-    level = int(parts[0])
-    if len(parts) >= 3 and parts[1].startswith("@"):
-        return level, parts[1], parts[2], None  # xref line: level, xref, tag, (no value slot used)
-    tag = parts[1] if len(parts) > 1 else ""
-    value = parts[2] if len(parts) > 2 else ""
-    return level, None, tag, value
-
-
 def _parse_records(text: str) -> dict:
     records = {}
     current_xref = None
     for raw_line in text.splitlines():
-        if not raw_line.strip():
+        stripped = raw_line.strip("\r\n").strip(" \t")
+        if not stripped:
             continue
-        parts = raw_line.strip().split(" ", 2)
-        level = int(parts[0])
+        parts = stripped.split(" ", 2)
+        try:
+            level = int(parts[0])
+        except ValueError:
+            # Malformed/continuation line we can't place -- skip rather than
+            # aborting the whole import over one bad line.
+            continue
+
         if level == 0:
             if len(parts) >= 3 and parts[1].startswith("@") and parts[2] in ("INDI", "FAM"):
                 current_xref = parts[1]
@@ -44,8 +41,18 @@ def _parse_records(text: str) -> dict:
             continue
         if current_xref is None:
             continue
+
         tag = parts[1] if len(parts) > 1 else ""
         value = parts[2] if len(parts) > 2 else ""
+
+        if tag in ("CONC", "CONT") and records[current_xref]["lines"]:
+            # Continuation of the previous line's value -- append rather than
+            # treat as its own field.
+            prev_level, prev_tag, prev_value = records[current_xref]["lines"][-1]
+            joiner = "\n" if tag == "CONT" else ""
+            records[current_xref]["lines"][-1] = (prev_level, prev_tag, prev_value + joiner + value)
+            continue
+
         records[current_xref]["lines"].append((level, tag, value))
     return records
 
@@ -159,9 +166,11 @@ def import_gedcom(text: str) -> dict:
 
     child_links = 0
     for family, info in family_map.values():
+        seen_children = set()
         for child_xref in info["chil"]:
             child_person = person_map.get(child_xref, (None,))[0]
-            if child_person:
+            if child_person and child_person.id not in seen_children:
+                seen_children.add(child_person.id)
                 db.session.add(FamilyChild(family_id=family.id, person_id=child_person.id))
                 child_links += 1
 
