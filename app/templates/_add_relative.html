@@ -1,0 +1,16 @@
+<details class="add-relative">
+  <summary>+ Add father</summary>
+  <form method="post" action="{{ url_for('families.add_parent', person_id=person.id) }}" class="relative-form">
+    <input type="hidden" name="relation" value="father">
+    {% include "_person_picker.html" %}
+    <button type="submit" class="btn btn-sm btn-primary">Add father</button>
+  </form>
+</details>
+<details class="add-relative">
+  <summary>+ Add mother</summary>
+  <form method="post" action="{{ url_for('families.add_parent', person_id=person.id) }}" class="relative-form">
+    <input type="hidden" name="relation" value="mother">
+    {% include "_person_picker.html" %}
+    <button type="submit" class="btn btn-sm btn-primary">Add mother</button>
+  </form>
+</details>

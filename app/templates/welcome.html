@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}Welcome{% endblock %}
+{% block content %}
+<div class="welcome-card">
+  <h1>Welcome to your family tree</h1>
+  <p>There's no one in the tree yet. Add the first person to get started, or import a GEDCOM file exported from another genealogy service.</p>
+  <div class="welcome-actions">
+    <a class="btn btn-primary" href="{{ url_for('people.new_person') }}">Add the first person</a>
+    <a class="btn" href="{{ url_for('gedcom.index') }}">Import a GEDCOM file</a>
+  </div>
+</div>
+{% endblock %}

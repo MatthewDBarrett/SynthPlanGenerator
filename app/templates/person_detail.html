@@ -1,0 +1,212 @@
+{% extends "base.html" %}
+{% block title %}{{ person.display_name() }}{% endblock %}
+{% block content %}
+<div class="profile-header">
+  <div class="profile-photo">
+    {% if person.profile_media_id %}
+      <img src="{{ url_for('media.file', media_id=person.profile_media_id) }}" alt="{{ person.display_name() }}">
+    {% else %}
+      <div class="profile-photo-placeholder">{{ 'M' if person.sex == 'M' else ('F' if person.sex == 'F' else '?') }}</div>
+    {% endif %}
+  </div>
+  <div class="profile-summary">
+    <h1>{{ person.display_name() }}</h1>
+    <p class="profile-dates">
+      {% if person.birth_date or person.birth_place %}Born {{ person.birth_date }}{% if person.birth_place %} in {{ person.birth_place }}{% endif %}<br>{% endif %}
+      {% if person.death_date or person.death_place %}Died {{ person.death_date }}{% if person.death_place %} in {{ person.death_place }}{% endif %}{% endif %}
+    </p>
+    <div class="profile-actions">
+      <a class="btn btn-primary" href="{{ url_for('tree.view', person_id=person.id) }}">View in Tree</a>
+      <a class="btn" href="{{ url_for('people.edit_person', person_id=person.id) }}">Edit</a>
+    </div>
+  </div>
+</div>
+
+<div class="profile-grid">
+  <section class="profile-family">
+    <h2>Family</h2>
+
+    <div class="family-block">
+      <h3>Parents</h3>
+      <ul class="relative-list">
+        {% for parent in parents %}
+        <li><a href="{{ url_for('people.detail', person_id=parent.id) }}">{{ parent.display_name() }}</a></li>
+        {% endfor %}
+      </ul>
+      {% include "_add_relative.html" with context %}
+    </div>
+
+    <div class="family-block">
+      <h3>Spouses</h3>
+      <ul class="relative-list">
+        {% for fam, spouse in spouses_families %}
+        <li>
+          {% if spouse %}<a href="{{ url_for('people.detail', person_id=spouse.id) }}">{{ spouse.display_name() }}</a>{% else %}<em>(no spouse recorded)</em>{% endif %}
+          {% if fam.marriage_date or fam.marriage_place %}
+            <span class="muted"> — m. {{ fam.marriage_date }}{% if fam.marriage_place %} in {{ fam.marriage_place }}{% endif %}</span>
+          {% endif %}
+          {% if fam.divorced %}<span class="muted"> (divorced)</span>{% endif %}
+          <details class="inline-edit">
+            <summary>edit</summary>
+            <form method="post" action="{{ url_for('families.edit_family', family_id=fam.id) }}">
+              <input type="hidden" name="return_to" value="{{ person.id }}">
+              <label>Marriage date <input type="text" name="marriage_date" value="{{ fam.marriage_date or '' }}"></label>
+              <label>Marriage place <input type="text" name="marriage_place" value="{{ fam.marriage_place or '' }}"></label>
+              <label class="checkbox-label"><input type="checkbox" name="divorced" {{ 'checked' if fam.divorced }}> Divorced</label>
+              <button type="submit" class="btn btn-sm">Save</button>
+            </form>
+            {% if spouse %}
+            <form method="post" action="{{ url_for('families.remove_spouse', family_id=fam.id) }}"
+                  onsubmit="return confirm('Remove this spouse relationship?');">
+              <input type="hidden" name="return_to" value="{{ person.id }}">
+              <button type="submit" class="btn btn-sm btn-danger">Remove spouse</button>
+            </form>
+            {% endif %}
+          </details>
+        </li>
+        {% endfor %}
+      </ul>
+      <details class="add-relative">
+        <summary>+ Add spouse</summary>
+        <form method="post" action="{{ url_for('families.add_spouse', person_id=person.id) }}" class="relative-form">
+          {% include "_person_picker.html" %}
+          <label>Marriage date <input type="text" name="marriage_date"></label>
+          <label>Marriage place <input type="text" name="marriage_place"></label>
+          <button type="submit" class="btn btn-sm btn-primary">Add spouse</button>
+        </form>
+      </details>
+    </div>
+
+    <div class="family-block">
+      <h3>Children</h3>
+      <ul class="relative-list">
+        {% for child in children %}
+        <li><a href="{{ url_for('people.detail', person_id=child.id) }}">{{ child.display_name() }}</a></li>
+        {% endfor %}
+      </ul>
+      <details class="add-relative">
+        <summary>+ Add child</summary>
+        <form method="post" action="{{ url_for('families.add_child', person_id=person.id) }}" class="relative-form">
+          {% if spouses_families|length > 1 %}
+          <label>With spouse
+            <select name="family_id">
+              {% for fam, spouse in spouses_families %}
+              <option value="{{ fam.id }}">{{ spouse.display_name() if spouse else 'No spouse recorded' }}</option>
+              {% endfor %}
+            </select>
+          </label>
+          {% elif spouses_families|length == 1 %}
+          <input type="hidden" name="family_id" value="{{ spouses_families[0][0].id }}">
+          {% endif %}
+          {% include "_person_picker.html" %}
+          <button type="submit" class="btn btn-sm btn-primary">Add child</button>
+        </form>
+      </details>
+    </div>
+
+    {% if siblings %}
+    <div class="family-block">
+      <h3>Siblings</h3>
+      <ul class="relative-list">
+        {% for sib in siblings %}
+        <li><a href="{{ url_for('people.detail', person_id=sib.id) }}">{{ sib.display_name() }}</a></li>
+        {% endfor %}
+      </ul>
+    </div>
+    {% endif %}
+  </section>
+
+  <section class="profile-events">
+    <h2>Life Events</h2>
+    <ul class="event-list">
+      {% for event in events %}
+      <li>
+        <strong>{{ event.event_type }}</strong>
+        {% if event.date %} — {{ event.date }}{% endif %}
+        {% if event.place %} in {{ event.place }}{% endif %}
+        {% if event.description %}<div class="muted">{{ event.description }}</div>{% endif %}
+        <form method="post" action="{{ url_for('people.delete_event', event_id=event.id) }}" class="inline-delete"
+              onsubmit="return confirm('Delete this event?');">
+          <button type="submit" class="link-btn">remove</button>
+        </form>
+      </li>
+      {% else %}
+      <li class="muted">No events recorded yet.</li>
+      {% endfor %}
+    </ul>
+    <details class="add-relative">
+      <summary>+ Add event</summary>
+      <form method="post" action="{{ url_for('people.add_event', person_id=person.id) }}">
+        <label>Type
+          <input type="text" name="event_type" placeholder="e.g. Residence, Occupation, Baptism">
+        </label>
+        <label>Date <input type="text" name="date"></label>
+        <label>Place <input type="text" name="place"></label>
+        <label>Description <textarea name="description" rows="2"></textarea></label>
+        <button type="submit" class="btn btn-sm btn-primary">Add event</button>
+      </form>
+    </details>
+  </section>
+
+  <section class="profile-media">
+    <h2>Photos</h2>
+    <div class="media-gallery">
+      {% for photo in photos %}
+      <figure>
+        <a href="{{ url_for('media.file', media_id=photo.id) }}" target="_blank">
+          <img src="{{ url_for('media.file', media_id=photo.id) }}" alt="{{ photo.caption or '' }}">
+        </a>
+        {% if photo.caption %}<figcaption>{{ photo.caption }}</figcaption>{% endif %}
+        <div class="media-actions">
+          {% if person.profile_media_id != photo.id %}
+          <form method="post" action="{{ url_for('media.set_profile', media_id=photo.id, person_id=person.id) }}">
+            <button type="submit" class="link-btn">set as profile photo</button>
+          </form>
+          {% endif %}
+          <form method="post" action="{{ url_for('media.delete', media_id=photo.id) }}" onsubmit="return confirm('Delete this photo?');">
+            <input type="hidden" name="person_id" value="{{ person.id }}">
+            <button type="submit" class="link-btn">delete</button>
+          </form>
+        </div>
+      </figure>
+      {% else %}
+      <p class="muted">No photos yet.</p>
+      {% endfor %}
+    </div>
+
+    <h2>Documents</h2>
+    <ul class="document-list">
+      {% for doc in documents %}
+      <li>
+        <a href="{{ url_for('media.file', media_id=doc.id) }}" target="_blank">{{ doc.original_filename or doc.filename }}</a>
+        {% if doc.caption %}<span class="muted"> — {{ doc.caption }}</span>{% endif %}
+        <form method="post" action="{{ url_for('media.delete', media_id=doc.id) }}" class="inline-delete" onsubmit="return confirm('Delete this document?');">
+          <input type="hidden" name="person_id" value="{{ person.id }}">
+          <button type="submit" class="link-btn">delete</button>
+        </form>
+      </li>
+      {% else %}
+      <li class="muted">No documents yet.</li>
+      {% endfor %}
+    </ul>
+
+    <details class="add-relative">
+      <summary>+ Upload photo or document</summary>
+      <form method="post" action="{{ url_for('media.upload', person_id=person.id) }}" enctype="multipart/form-data">
+        <label>File <input type="file" name="file" required></label>
+        <label>Caption <input type="text" name="caption"></label>
+        <button type="submit" class="btn btn-sm btn-primary">Upload</button>
+      </form>
+    </details>
+  </section>
+</div>
+
+{% if person.notes %}
+<section class="profile-notes">
+  <h2>Notes</h2>
+  <p>{{ person.notes }}</p>
+</section>
+{% endif %}
+
+<script src="{{ url_for('static', filename='js/relative-form.js') }}"></script>
+{% endblock %}

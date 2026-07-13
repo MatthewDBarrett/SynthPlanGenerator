@@ -1,12 +1,23 @@
 [project]
-name = "blank-app-template"
+name = "family-tree"
 version = "0.1.0"
-description = "A simple Streamlit app template."
+description = "A self-hosted family tree / genealogy web app."
 readme = "README.md"
-requires-python = ">=3.14"
+requires-python = ">=3.11"
 dependencies = [
-    "streamlit>=1.58.0",
+    "flask>=3.0.0",
+    "flask-sqlalchemy>=3.1.0",
+    "pillow>=10.4.0",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.0.0",
 ]
 
 [tool.uv]
 package = false
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]
